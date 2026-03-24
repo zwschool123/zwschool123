@@ -1,26 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>File Directory</title>
+  <meta charset="UTF-8">
+  <title>Index of /</title>
   <style>
-    body { font-family: Arial; }
+    body { font-family: monospace; padding: 20px; }
     a { text-decoration: none; }
-    li { margin: 5px 0; }
-    .folder { font-weight: bold; }
+    li { margin: 4px 0; }
   </style>
 </head>
 <body>
 
-<h1>File Directory</h1>
+<h1>Index of /</h1>
 <p id="pathDisplay">/</p>
-<button onclick="goBack()">⬅ Back</button>
-
 <ul id="fileList">Loading...</ul>
 
 <script>
-const username = "zwschool123";
-const repo = "zwschool123";
-
+const username = "YOUR_USERNAME";
+const repo = "YOUR_REPO";
 let currentPath = "";
 let historyStack = [];
 
@@ -28,58 +25,65 @@ async function loadFiles(path = "") {
   const list = document.getElementById("fileList");
   const pathDisplay = document.getElementById("pathDisplay");
 
-  list.innerHTML = "Loading...";
   pathDisplay.textContent = "/" + path;
+  list.innerHTML = "Loading...";
 
   try {
     const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`);
+    if (!res.ok) throw new Error("API request failed");
     const data = await res.json();
+    if (!Array.isArray(data)) {
+      list.innerHTML = "<li>(empty folder)</li>";
+      return;
+    }
 
     list.innerHTML = "";
+
+    // Add .. to go up
+    if (historyStack.length > 0) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = "#";
+      a.textContent = "..";
+      a.onclick = () => {
+        currentPath = historyStack.pop();
+        loadFiles(currentPath);
+      };
+      li.appendChild(a);
+      list.appendChild(li);
+    }
 
     data.forEach(item => {
       const li = document.createElement("li");
       const a = document.createElement("a");
 
       if (item.type === "dir") {
-        a.textContent = "Folder: " + item.name;
+        a.textContent = item.name + "/";
         a.href = "#";
-        a.className = "folder";
-
         a.onclick = () => {
           historyStack.push(currentPath);
           currentPath = item.path;
           loadFiles(currentPath);
         };
-      } else if (item.name.endsWith(".txt")) {
-        a.textContent = "Document: " + item.name;
-        a.href = `https://${username}.github.io/${repo}/${item.path}`;
-        a.target = "_blank";
       } else {
-        return; // ignore non-txt files
+        a.textContent = item.name;
+        a.href = item.download_url;
+        a.target = "_blank";
       }
 
       li.appendChild(a);
       list.appendChild(li);
     });
 
-    if (list.innerHTML === "") {
-      list.innerHTML = "<li>NThis folder is empty.</li>";
-    }
+    if (list.innerHTML === "") list.innerHTML = "<li>(empty folder)</li>";
 
   } catch (err) {
-    list.innerHTML = "<li>Error loading files. Is your file directory mounted to /root?</li>";
+    list.innerHTML = "<li>Error loading files</li>";
     console.error(err);
   }
 }
 
-function goBack() {
-  if (historyStack.length > 0) {
-    currentPath = historyStack.pop();
-    loadFiles(currentPath);
-  }
-}
-
+// Initial load
 loadFiles();
 </script>
 
