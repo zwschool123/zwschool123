@@ -32,6 +32,7 @@ a:hover { text-decoration: underline; }
 </head>
 <body>
 
+<!-- Password login overlay -->
 <div id="loginBox">
   <div>
     <h2>Enter Password</h2>
@@ -58,13 +59,18 @@ a:hover { text-decoration: underline; }
 
 <script>
 const correctHash = "3ee0c5fb019d6cacddf5d29df7fa1d79b9be4eb1bf27efabe74ed69d337bd235"; 
-// SHA-256 hash of your password
+const username = "zwschool123";
+const repo = "zwschool123";
+let currentPath = "";
+let historyStack = [];
 
+// Password hashing function
 async function sha256(str) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+// Check password
 async function checkPassword() {
   const input = document.getElementById("passwordInput").value;
   const hash = await sha256(input);
@@ -76,13 +82,7 @@ async function checkPassword() {
   }
 }
 
-// --- Existing GitHub file loading code here ---
-const username = "zwschool123"; // replace
-const repo = "zwschool123";         // replace
-let currentPath = "";
-let historyStack = [];
-
-// Helper for formatting file size
+// Format file size
 function formatSize(bytes) {
   if (bytes === 0) return "-";
   if (bytes < 1024) return bytes + "B";
@@ -90,6 +90,7 @@ function formatSize(bytes) {
   return (bytes/(1024*1024)).toFixed(1) + "M";
 }
 
+// Fetch last modified date
 async function getLastModified(path) {
   try {
     const res = await fetch(`https://api.github.com/repos/${username}/${repo}/commits?path=${path}&per_page=1`);
@@ -101,6 +102,7 @@ async function getLastModified(path) {
   return "-";
 }
 
+// Load files and folders
 async function loadFiles(path="") {
   const tbody = document.getElementById("fileList");
   tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
@@ -113,33 +115,61 @@ async function loadFiles(path="") {
 
     tbody.innerHTML = "";
 
+    // Parent directory
     if (historyStack.length > 0) {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td><a href="#" onclick="goBack()">Parent Directory</a></td><td>-</td><td>-</td><td></td>`;
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      const link = document.createElement("a");
+      link.href = "#";
+      link.textContent = "Parent Directory";
+      link.style.cursor = "pointer";
+      link.addEventListener("click", goBack);
+      td.appendChild(link);
+      tr.appendChild(td);
       tbody.appendChild(tr);
     }
 
+    // Sort dirs first
     data.sort((a,b)=>{
       if(a.type===b.type) return a.name.localeCompare(b.name);
       return a.type==='dir'?-1:1;
     });
 
     for (const item of data) {
-      if(item.name.toLowerCase() === "index.html") continue;
+      if(item.name.toLowerCase() === "index.html") continue; // hide index.html
+
       const tr = document.createElement("tr");
-      const name = item.type==='dir' ? item.name+'/' : item.name;
-      const href = item.type==='dir' ? "#" : item.download_url;
-      const onclick = item.type==='dir' ? `loadDir("${item.path}")` : "";
 
-      const lastMod = await getLastModified(item.path);
-      const size = item.type==='file' ? formatSize(item.size) : "-";
+      // Name column
+      const nameCell = document.createElement("td");
+      const link = document.createElement("a");
+      link.textContent = item.type==='dir' ? item.name+'/' : item.name;
+      if(item.type==='dir'){
+        link.href = "#";
+        link.style.cursor = "pointer";
+        link.addEventListener("click", () => loadDir(item.path));
+      } else {
+        link.href = item.download_url;
+        link.target = "_blank";
+      }
+      nameCell.appendChild(link);
+      tr.appendChild(nameCell);
 
-      tr.innerHTML = `
-        <td><a href="${href}" ${onclick ? 'onclick="'+onclick+'"' : ''} target="${item.type==='file'?'_blank':''}">${name}</a></td>
-        <td>${lastMod}</td>
-        <td>${size}</td>
-        <td></td>
-      `;
+      // Last modified
+      const lastModCell = document.createElement("td");
+      lastModCell.textContent = await getLastModified(item.path);
+      tr.appendChild(lastModCell);
+
+      // Size
+      const sizeCell = document.createElement("td");
+      sizeCell.textContent = item.type==='file' ? formatSize(item.size) : "-";
+      tr.appendChild(sizeCell);
+
+      // Description
+      const descCell = document.createElement("td");
+      tr.appendChild(descCell);
+
       tbody.appendChild(tr);
     }
 
@@ -164,7 +194,7 @@ function goBack() {
   }
 }
 
-// Don't call loadFiles yet — only after login
+// Do not call loadFiles until login succeeds
 </script>
 
 </body>
