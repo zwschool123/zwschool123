@@ -4,35 +4,21 @@
 <meta charset="UTF-8">
 <title>Index of /root</title>
 <style>
-body {
-  font-family: "Times New Roman", Times, serif;
-  padding: 20px;
-}
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 4px; font-size: 14px; }
-th { border-bottom: 1px solid #aaa; }
-a { text-decoration: none; color: blue; }
-a:hover { text-decoration: underline; }
+body { font-family:"Times New Roman", Times, serif; padding:20px; }
+table { width:100%; border-collapse:collapse; }
+th, td { text-align:left; padding:4px; font-size:14px; }
+th { border-bottom:1px solid #aaa; }
+a { text-decoration:none; color:blue; }
+a:hover { text-decoration:underline; }
 #loginBox {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
 }
-#loginBox div {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
+#loginBox div { background:white; padding:20px; border-radius:8px; text-align:center; }
 </style>
 </head>
 <body>
 
-<!-- Password login overlay -->
 <div id="loginBox">
   <div>
     <h2>Enter Password</h2>
@@ -58,23 +44,18 @@ a:hover { text-decoration: underline; }
 </table>
 
 <script>
-// Password SHA-256 hash
 const correctHash = "3ee0c5fb019d6cacddf5d29df7fa1d79b9be4eb1bf27efabe74ed69d337bd235";
-
-// GitHub repo info
 const username = "zwschool123";
 const repo = "zwschool123";
-
 let currentPath = "";
 let historyStack = [];
 
-// Hashing function
+// SHA-256 hash
 async function sha256(str) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-// Check password
 async function checkPassword() {
   const input = document.getElementById("passwordInput").value;
   const hash = await sha256(input);
@@ -86,41 +67,36 @@ async function checkPassword() {
   }
 }
 
-// Format file size
-function formatSize(bytes) {
-  if (bytes === 0) return "-";
-  if (bytes < 1024) return bytes + "B";
-  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + "K";
-  return (bytes/(1024*1024)).toFixed(1) + "M";
+function formatSize(bytes){
+  if(bytes===0) return "-";
+  if(bytes<1024) return bytes+"B";
+  if(bytes<1024*1024) return (bytes/1024).toFixed(1)+"K";
+  return (bytes/(1024*1024)).toFixed(1)+"M";
 }
 
-// Get last modified date
-async function getLastModified(path) {
-  try {
+async function getLastModified(path){
+  try{
     const res = await fetch(`https://api.github.com/repos/${username}/${repo}/commits?path=${path}&per_page=1`);
     const data = await res.json();
-    if (data && data[0] && data[0].commit) {
-      return new Date(data[0].commit.committer.date).toLocaleString();
-    }
-  } catch(e) {}
+    if(data && data[0] && data[0].commit) return new Date(data[0].commit.committer.date).toLocaleString();
+  }catch(e){}
   return "-";
 }
 
-// Load files and folders
-async function loadFiles(path="") {
+async function loadFiles(path=""){
   const tbody = document.getElementById("fileList");
   tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
 
-  try {
+  try{
     const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`);
-    if (!res.ok) throw new Error("API request failed");
+    if(!res.ok) throw new Error("API failed");
     const data = await res.json();
-    if (!Array.isArray(data)) { tbody.innerHTML = "<tr><td colspan='4'>(empty folder)</td></tr>"; return; }
+    if(!Array.isArray(data)) { tbody.innerHTML = "<tr><td colspan='4'>(empty folder)</td></tr>"; return; }
 
     tbody.innerHTML = "";
 
     // Parent directory
-    if (historyStack.length > 0) {
+    if(historyStack.length>0){
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.colSpan = 4;
@@ -134,15 +110,11 @@ async function loadFiles(path="") {
       tbody.appendChild(tr);
     }
 
-    // Sort directories first
-    data.sort((a,b)=>{
-      if(a.type===b.type) return a.name.localeCompare(b.name);
-      return a.type==='dir'?-1:1;
-    });
+    // Sort dirs first
+    data.sort((a,b)=>a.type===b.type ? a.name.localeCompare(b.name) : a.type==='dir'?-1:1);
 
-    // Build table rows
-    for (const item of data) {
-      if(item.name.toLowerCase() === "index.html") continue;
+    for(const item of data){
+      if(item.name.toLowerCase()==="index.html") continue;
 
       const tr = document.createElement("tr");
 
@@ -153,18 +125,18 @@ async function loadFiles(path="") {
       if(item.type==='dir'){
         link.href = "#";
         link.style.cursor = "pointer";
-        link.addEventListener("click", () => loadDir(item.path));
+        link.addEventListener("click", ()=>loadDir(item.path));
       } else {
         link.href = item.download_url;
-        link.target = "_blank";
+        link.target="_blank";
       }
       nameCell.appendChild(link);
       tr.appendChild(nameCell);
 
       // Last modified placeholder
-      const lastModCell = document.createElement("td");
-      lastModCell.textContent = "-";
-      tr.appendChild(lastModCell);
+      const lastCell = document.createElement("td");
+      lastCell.textContent = "-";
+      tr.appendChild(lastCell);
 
       // Size
       const sizeCell = document.createElement("td");
@@ -177,36 +149,32 @@ async function loadFiles(path="") {
 
       tbody.appendChild(tr);
 
-      // Fetch last modified asynchronously
-      if(item.type==='file'){
-        getLastModified(item.path).then(date => lastModCell.textContent = date);
-      }
+      // Fetch last modified for files asynchronously
+      if(item.type==='file') getLastModified(item.path).then(d=>lastCell.textContent=d);
     }
 
-    if (tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='4'>(empty folder)</td></tr>";
+    if(tbody.innerHTML==="") tbody.innerHTML="<tr><td colspan='4'>(empty folder)</td></tr>";
 
-  } catch(err) {
-    tbody.innerHTML = "<tr><td colspan='4'>Error loading files</td></tr>";
+  }catch(err){
+    tbody.innerHTML="<tr><td colspan='4'>Error loading files</td></tr>";
     console.error(err);
   }
 }
 
-// Navigate into folder
-function loadDir(path) {
+function loadDir(path){
   historyStack.push(currentPath);
-  currentPath = path;
+  currentPath=path;
   loadFiles(currentPath);
 }
 
-// Go back to parent folder
-function goBack() {
+function goBack(){
   if(historyStack.length>0){
-    currentPath = historyStack.pop();
+    currentPath=historyStack.pop();
     loadFiles(currentPath);
   }
 }
 
-// Do not call loadFiles until login succeeds
+// Do not call loadFiles until login
 </script>
 
 </body>
