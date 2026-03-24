@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>File Browser</title>
+  <title>File Directory</title>
   <style>
     body { font-family: Arial; }
     a { text-decoration: none; }
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<h1>📁 File Browser</h1>
+<h1>File Directory</h1>
 <p id="pathDisplay">/</p>
 <button onclick="goBack()">⬅ Back</button>
 
@@ -42,7 +42,7 @@ async function loadFiles(path = "") {
       const a = document.createElement("a");
 
       if (item.type === "dir") {
-        a.textContent = "📁 " + item.name;
+        a.textContent = "Folder: " + item.name;
         a.href = "#";
         a.className = "folder";
 
@@ -52,7 +52,7 @@ async function loadFiles(path = "") {
           loadFiles(currentPath);
         };
       } else if (item.name.endsWith(".txt")) {
-        a.textContent = "📄 " + item.name;
+        a.textContent = "Document: " + item.name;
         a.href = `https://${username}.github.io/${repo}/${item.path}`;
         a.target = "_blank";
       } else {
@@ -64,11 +64,11 @@ async function loadFiles(path = "") {
     });
 
     if (list.innerHTML === "") {
-      list.innerHTML = "<li>No files here</li>";
+      list.innerHTML = "<li>NThis folder is empty.</li>";
     }
 
   } catch (err) {
-    list.innerHTML = "<li>Error loading files</li>";
+    list.innerHTML = "<li>Error loading files. Is your file directory mounted to /root?</li>";
     console.error(err);
   }
 }
