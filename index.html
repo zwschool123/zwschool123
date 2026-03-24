@@ -58,13 +58,17 @@ a:hover { text-decoration: underline; }
 </table>
 
 <script>
-const correctHash = "3ee0c5fb019d6cacddf5d29df7fa1d79b9be4eb1bf27efabe74ed69d337bd235"; 
+// Password SHA-256 hash
+const correctHash = "3ee0c5fb019d6cacddf5d29df7fa1d79b9be4eb1bf27efabe74ed69d337bd235";
+
+// GitHub repo info
 const username = "zwschool123";
 const repo = "zwschool123";
+
 let currentPath = "";
 let historyStack = [];
 
-// Password hashing function
+// Hashing function
 async function sha256(str) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
@@ -90,7 +94,7 @@ function formatSize(bytes) {
   return (bytes/(1024*1024)).toFixed(1) + "M";
 }
 
-// Fetch last modified date
+// Get last modified date
 async function getLastModified(path) {
   try {
     const res = await fetch(`https://api.github.com/repos/${username}/${repo}/commits?path=${path}&per_page=1`);
@@ -130,18 +134,19 @@ async function loadFiles(path="") {
       tbody.appendChild(tr);
     }
 
-    // Sort dirs first
+    // Sort directories first
     data.sort((a,b)=>{
       if(a.type===b.type) return a.name.localeCompare(b.name);
       return a.type==='dir'?-1:1;
     });
 
+    // Build table rows
     for (const item of data) {
-      if(item.name.toLowerCase() === "index.html") continue; // hide index.html
+      if(item.name.toLowerCase() === "index.html") continue;
 
       const tr = document.createElement("tr");
 
-      // Name column
+      // Name
       const nameCell = document.createElement("td");
       const link = document.createElement("a");
       link.textContent = item.type==='dir' ? item.name+'/' : item.name;
@@ -156,9 +161,9 @@ async function loadFiles(path="") {
       nameCell.appendChild(link);
       tr.appendChild(nameCell);
 
-      // Last modified
+      // Last modified placeholder
       const lastModCell = document.createElement("td");
-      lastModCell.textContent = await getLastModified(item.path);
+      lastModCell.textContent = "-";
       tr.appendChild(lastModCell);
 
       // Size
@@ -171,6 +176,11 @@ async function loadFiles(path="") {
       tr.appendChild(descCell);
 
       tbody.appendChild(tr);
+
+      // Fetch last modified asynchronously
+      if(item.type==='file'){
+        getLastModified(item.path).then(date => lastModCell.textContent = date);
+      }
     }
 
     if (tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='4'>(empty folder)</td></tr>";
@@ -181,12 +191,14 @@ async function loadFiles(path="") {
   }
 }
 
+// Navigate into folder
 function loadDir(path) {
   historyStack.push(currentPath);
   currentPath = path;
   loadFiles(currentPath);
 }
 
+// Go back to parent folder
 function goBack() {
   if(historyStack.length>0){
     currentPath = historyStack.pop();
