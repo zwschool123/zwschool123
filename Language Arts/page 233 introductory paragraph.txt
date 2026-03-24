@@ -1,5 +1,0 @@
-Tree is different from Bush because Bush bought baked beans, while Tree bought fresh fettuccine.
-If we assign variables to Tree and Bush, for example, x for Tree and y for Bush, then we have done no work.
-If I walk over to the street and I see Bush, I will be happier than seeing Tree.
-Tree bought fresh fettuccine, therefore Bush bought baked beans.
-This is the end of the introductory paragraph.
