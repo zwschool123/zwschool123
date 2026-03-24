@@ -6,7 +6,7 @@
   <style>
     body { font-family: monospace; padding: 20px; }
     a { text-decoration: none; }
-    li { margin: 4px 0; }
+    li { margin: 3px 0; }
   </style>
 </head>
 <body>
@@ -16,8 +16,8 @@
 <ul id="fileList">Loading...</ul>
 
 <script>
-const username = "YOUR_USERNAME";
-const repo = "YOUR_REPO";
+const username = "zwschool123"; // replace with your GitHub username
+const repo = "zwschool123";         // replace with your GitHub repo name
 let currentPath = "";
 let historyStack = [];
 
@@ -39,7 +39,7 @@ async function loadFiles(path = "") {
 
     list.innerHTML = "";
 
-    // Add .. to go up
+    // Add ".." to go up
     if (historyStack.length > 0) {
       const li = document.createElement("li");
       const a = document.createElement("a");
@@ -67,7 +67,7 @@ async function loadFiles(path = "") {
         };
       } else {
         a.textContent = item.name;
-        a.href = item.download_url;
+        a.href = item.download_url; // safe link, works with spaces
         a.target = "_blank";
       }
 
